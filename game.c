@@ -1,7 +1,4 @@
-#include "SDL.h"
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
+#include "game.h"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
@@ -9,36 +6,6 @@
 const int32_t base_max_hp = 100;
 const int32_t base_damage = 5;
 const int32_t bullet_color = 0xFF0000FF;
-
-typedef struct {
-  SDL_Window *window;
-  SDL_Renderer *renderer;
-  int32_t bg_color;
-  int32_t fg_color;
-} sdl_t;
-
-typedef struct {
-  int32_t x;
-  int32_t y;
-} pos_t;
-
-typedef struct {
-  int32_t hp;
-  int32_t max_hp;
-  int32_t damage;
-  int32_t color;
-  SDL_Rect rect;
-} player_t;
-
-typedef enum {
-  RUNNING,
-  QUIT,
-  PAUSED,
-} state_t;
-
-typedef struct {
-  state_t state;
-} game_t;
 
 bool init_sdl(sdl_t *sdl) {
   if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO)) {
@@ -69,6 +36,7 @@ void init_player(player_t *player) {
   player->max_hp = base_max_hp;
   player->hp = player->max_hp;
   player->damage = base_damage;
+  player->ms = 5;
 
   player->color = 0xFFFFFFFF;
 
@@ -78,7 +46,14 @@ void init_player(player_t *player) {
   player->rect.w = 25;
 }
 
-void init_game(game_t *game) { game->state = RUNNING; }
+void init_game(game_t *game) {
+  game->state = RUNNING;
+  game->keys.w = false;
+  game->keys.a = false;
+  game->keys.s = false;
+  game->keys.d = false;
+  game->keys.lc = false;
+}
 
 void draw_player(sdl_t *sdl, player_t *player) {
   // extract player color rgb
@@ -109,20 +84,94 @@ void update_screen(sdl_t *sdl, player_t *player) {
 
 void handle_input(game_t *game) {
   SDL_Event event;
+  int32_t event_count = 0;
   while (SDL_PollEvent(&event)) {
+    event_count++;
     switch (event.type) {
+      // handle window close
     case SDL_QUIT:
       game->state = QUIT;
       break;
+
+      // begin keydown case
     case SDL_KEYDOWN:
       switch (event.key.keysym.sym) {
       case SDLK_ESCAPE:
         game->state = QUIT;
         break;
+      default:
+        break;
       }
+      break;
+      // end keydown case
+
+      // begin mouse down case
+    case SDL_MOUSEBUTTONDOWN:
+      switch (event.button.button) {
+      case (SDL_BUTTON_LEFT):
+        game->keys.lc = true;
+        game->last_shooting.x = event.button.x;
+        game->last_shooting.y = event.button.y;
+        break;
+      default:
+        break;
+      }
+      break;
+      // end mouse down case
+      // begin mouse motion case
+    case SDL_MOUSEMOTION:
+      if (game->keys.lc) {
+        game->last_shooting.x = event.motion.x;
+        game->last_shooting.y = event.motion.y;
+      }
+      break;
+      // end mouse motion case
+
+      // begin mouse up case
+    case SDL_MOUSEBUTTONUP:
+      switch (event.button.button) {
+      case (SDL_BUTTON_LEFT):
+        game->keys.lc = false;
+        break;
+      default:
+        break;
+      }
+      break;
+      // end mouse down case
+    default:
+      break;
+      // end all case
     }
   }
+  SDL_PumpEvents();
+
+  const uint8_t *keystate = SDL_GetKeyboardState(NULL);
+  game->keys.w = keystate[SDL_SCANCODE_W];
+  game->keys.a = keystate[SDL_SCANCODE_A];
+  game->keys.s = keystate[SDL_SCANCODE_S];
+  game->keys.d = keystate[SDL_SCANCODE_D];
 }
+
+void handle_movement(game_t *game, player_t *player) {
+  if (game->keys.w && player->rect.y > 0) {
+    player->rect.y -= player->ms;
+  }
+  if (game->keys.a && player->rect.x > 0) {
+    player->rect.x -= player->ms;
+  }
+  if (game->keys.s && player->rect.y + player->rect.h < WINDOW_HEIGHT) {
+    player->rect.y += player->ms;
+  }
+  if (game->keys.d && player->rect.x + player->rect.w < WINDOW_WIDTH) {
+    player->rect.x += player->ms;
+  }
+}
+
+void handle_shooting(game_t *game) {
+  if (game->keys.lc) {
+  }
+}
+
 void cleanup(void) { SDL_Quit(); }
 
 int main(void) {
@@ -144,6 +193,9 @@ int main(void) {
   while (game.state != QUIT) {
     handle_input(&game);
     update_screen(&sdl, &player);
+    handle_movement(&game, &player);
+    handle_shooting(&game);
+    SDL_Delay(16);
   }
 
   cleanup();
