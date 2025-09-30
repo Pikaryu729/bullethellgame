@@ -1,11 +1,9 @@
 #include "game.h"
+#include "bullets.h"
+#include "math.h"
 
-#define WINDOW_WIDTH 1280
-#define WINDOW_HEIGHT 720
-
-const int32_t base_max_hp = 100;
-const int32_t base_damage = 5;
-const int32_t bullet_color = 0xFF0000FF;
+const i32 base_max_hp = 100;
+const i32 base_damage = 5;
 
 bool init_sdl(sdl_t *sdl) {
   if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO)) {
@@ -25,9 +23,9 @@ bool init_sdl(sdl_t *sdl) {
   }
 
   // initialize background to black
-  sdl->bg_color = 0x000000FF;
+  sdl->bg_color = BLACK;
   // foreground color white
-  sdl->fg_color = 0xFFFFFFFF;
+  sdl->fg_color = WHITE;
 
   return true;
 }
@@ -38,12 +36,13 @@ void init_player(player_t *player) {
   player->damage = base_damage;
   player->ms = 5;
 
-  player->color = 0xFFFFFFFF;
+  player->color = WHITE;
 
   player->rect.x = WINDOW_WIDTH / 2;
   player->rect.y = WINDOW_HEIGHT / 2;
   player->rect.h = 25;
   player->rect.w = 25;
+  player->bullet_size = 5;
 }
 
 void init_game(game_t *game) {
@@ -55,38 +54,36 @@ void init_game(game_t *game) {
   game->keys.lc = false;
 }
 
-void draw_player(sdl_t *sdl, player_t *player) {
+void draw_player(SDL_Renderer *renderer, player_t *player) {
   // extract player color rgb
-  int8_t color_r = (player->color >> 24) & 0xFF;
-  int8_t color_g = (player->color >> 16) & 0xFF;
-  int8_t color_b = (player->color >> 8) & 0xFF;
-  int8_t color_a = (player->color);
+  i8 color_r = (player->color >> 24) & 0xFF;
+  i8 color_g = (player->color >> 16) & 0xFF;
+  i8 color_b = (player->color >> 8) & 0xFF;
+  i8 color_a = (player->color);
 
   // set the render color to the color of the player
-  SDL_SetRenderDrawColor(sdl->renderer, color_r, color_g, color_b, color_a);
-  SDL_RenderFillRect(sdl->renderer, &player->rect);
+  SDL_SetRenderDrawColor(renderer, color_r, color_g, color_b, color_a);
+  SDL_RenderFillRect(renderer, &player->rect);
 }
 
-void update_screen(sdl_t *sdl, player_t *player) {
+void update_screen(sdl_t *sdl, player_t *player, BulletManager *manager) {
   // extract bg color rgb
-  int8_t color_r = (sdl->bg_color >> 24) & 0xFF;
-  int8_t color_g = (sdl->bg_color >> 16) & 0xFF;
-  int8_t color_b = (sdl->bg_color >> 8) & 0xFF;
-  int8_t color_a = (sdl->bg_color);
+  i8 color_r = (sdl->bg_color >> 24) & 0xFF;
+  i8 color_g = (sdl->bg_color >> 16) & 0xFF;
+  i8 color_b = (sdl->bg_color >> 8) & 0xFF;
+  i8 color_a = (sdl->bg_color);
 
   SDL_SetRenderDrawColor(sdl->renderer, color_r, color_g, color_b, color_a);
   SDL_RenderClear(sdl->renderer);
 
-  draw_player(sdl, player);
-
+  draw_player(sdl->renderer, player);
+  draw_bullets(sdl->renderer, manager);
   SDL_RenderPresent(sdl->renderer);
 }
 
 void handle_input(game_t *game) {
   SDL_Event event;
-  int32_t event_count = 0;
   while (SDL_PollEvent(&event)) {
-    event_count++;
     switch (event.type) {
       // handle window close
     case SDL_QUIT:
@@ -143,7 +140,6 @@ void handle_input(game_t *game) {
       // end all case
     }
   }
-  SDL_PumpEvents();
 
   const uint8_t *keystate = SDL_GetKeyboardState(NULL);
   game->keys.w = keystate[SDL_SCANCODE_W];
@@ -167,21 +163,44 @@ void handle_movement(game_t *game, player_t *player) {
   }
 }
 
-void handle_shooting(game_t *game) {
+void handle_shooting(game_t *game, player_t *player, BulletManager *manager) {
   if (game->keys.lc) {
+    const i32 dx = game->last_shooting.x - player->rect.x;
+    const i32 dy = game->last_shooting.y - player->rect.y;
+    printf("last shooting x: %d dx: %d, last shooting y: %d dy: %d\n", game->last_shooting.x, dx, game->last_shooting.y, dy);
+    const float magnitude = sqrtf(dx * dx + dy * dy);
+
+    if (magnitude == 0) {
+      printf("this shouldn't print\n");
+      return;
+    }
+
+    const i32 vx = (dx / magnitude) * BULLET_SPEED;
+    const i32 vy = (dy / magnitude) * BULLET_SPEED;
+    printf("Firing bullet with vx: %d, vy: %d\n", vx, vy);
+    SDL_Rect bullet_rect = {.x = player->rect.x,
+                            .y = player->rect.y,
+                            .h = player->bullet_size,
+                            .w = player->bullet_size};
+
+    add_bullet(manager, bullet_rect, vx, vy);
   }
 }
 
-void cleanup(void) { SDL_Quit(); }
+void cleanup(BulletManager *manager) {
+  free_bullet_manager(manager);
+  SDL_Quit();
+}
 
 int main(void) {
 
   // initialize sdl subsystems, create window and renderer
   sdl_t sdl;
   if (!init_sdl(&sdl)) {
-    cleanup();
+    SDL_Quit();
     exit(1);
   }
+
   // set game state to running
   game_t game;
   init_game(&game);
@@ -190,13 +209,18 @@ int main(void) {
   player_t player;
   init_player(&player);
 
+  // initialize bullet manager with 10 bullets to start
+  BulletManager *manager = create_bullet_manager(10);
+
   while (game.state != QUIT) {
     handle_input(&game);
-    update_screen(&sdl, &player);
+    update_screen(&sdl, &player, manager);
     handle_movement(&game, &player);
-    handle_shooting(&game);
+    handle_shooting(&game, &player, manager);
+    update_bullets(manager);
+    // ~ 60fps
     SDL_Delay(16);
   }
 
-  cleanup();
+  cleanup(manager);
 }

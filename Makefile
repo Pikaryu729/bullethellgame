@@ -1,7 +1,7 @@
 CFLAGS = -std=c17 -Wall -Wextra -Werror
 
 all:
-	gcc game.c -o game $(CFLAGS) `sdl2-config --cflags --libs`
+	gcc game.c bullets.c -o game $(CFLAGS) `sdl2-config --cflags --libs` -lm
 
 debug:
-	gcc -g game.c -o game $(CFLAGS) `sdl2-config --cflags --libs` -DDEBUG
+	gcc -g game.c bullets.c -o game $(CFLAGS) `sdl2-config --cflags --libs` -lm -DDEBUG

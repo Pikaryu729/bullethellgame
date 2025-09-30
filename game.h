@@ -1,22 +1,19 @@
 #pragma once
+#include "bullets.h"
+#include "common.h"
+
 
 #include "SDL.h"
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
 
-typedef struct {
-  int32_t damage;
-  SDL_Rect rect;
-  int32_t vx;
-  int32_t vy;
-} bullet_t;
+// typedef int names
 
 typedef struct {
   SDL_Window *window;
   SDL_Renderer *renderer;
-  int32_t bg_color;
-  int32_t fg_color;
+  i32 bg_color;
+  i32 fg_color;
 } sdl_t;
 
 typedef struct {
@@ -28,17 +25,18 @@ typedef struct {
 } keypad_t;
 
 typedef struct {
-  int32_t x;
-  int32_t y;
+  i32 x;
+  i32 y;
 } point_t;
 
 typedef struct {
-  int32_t hp;     // health
-  int32_t max_hp; // max health
-  int32_t damage; // damage per bullet
-  int32_t color;  // hexadecimal color value
-  SDL_Rect rect;  // hitbox
-  int32_t ms;     // movement speed
+  i32 hp;          // health
+  i32 max_hp;      // max health
+  i32 damage;      // damage per bullet
+  i32 color;       // hexadecimal color value
+  SDL_Rect rect;   // hitbox
+  i32 ms;          // movement speed
+  i32 bullet_size; // bullet size
 } player_t;
 
 typedef enum {
@@ -55,3 +53,11 @@ typedef struct {
 } game_t;
 
 void move_player(game_t *game, player_t *player);
+void update_screen(sdl_t *sdl, player_t *player, BulletManager *manager);
+bool init_sdl(sdl_t *sdl);
+void init_player(player_t *player);
+void init_game(game_t *game);
+void draw_player(SDL_Renderer *renderer, player_t *player);
+void handle_input(game_t *game);
+void handle_movement(game_t *game, player_t *player);
+void handle_shooting(game_t *game, player_t *player, BulletManager *manager);
