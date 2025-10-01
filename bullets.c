@@ -37,11 +37,9 @@ void update_bullets(BulletManager *manager) {
 
 bool is_bullet_offscreen(bullet_t *bullet) {
   if (bullet->rect.x > WINDOW_WIDTH || bullet->rect.x < 0) {
-    printf("bullet offscreen x\n");
     return true;
   }
   if (bullet->rect.y > WINDOW_HEIGHT || bullet->rect.y < 0) {
-    printf("bullet offscreen y\n");
     return true;
   }
   return false;

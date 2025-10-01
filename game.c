@@ -167,7 +167,6 @@ void handle_shooting(game_t *game, player_t *player, BulletManager *manager) {
   if (game->keys.lc) {
     const i32 dx = game->last_shooting.x - player->rect.x;
     const i32 dy = game->last_shooting.y - player->rect.y;
-    printf("last shooting x: %d dx: %d, last shooting y: %d dy: %d\n", game->last_shooting.x, dx, game->last_shooting.y, dy);
     const float magnitude = sqrtf(dx * dx + dy * dy);
 
     if (magnitude == 0) {
@@ -177,7 +176,6 @@ void handle_shooting(game_t *game, player_t *player, BulletManager *manager) {
 
     const i32 vx = (dx / magnitude) * BULLET_SPEED;
     const i32 vy = (dy / magnitude) * BULLET_SPEED;
-    printf("Firing bullet with vx: %d, vy: %d\n", vx, vy);
     SDL_Rect bullet_rect = {.x = player->rect.x,
                             .y = player->rect.y,
                             .h = player->bullet_size,
