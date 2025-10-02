@@ -2,7 +2,6 @@
 #include "bullets.h"
 #include "common.h"
 
-
 #include "SDL.h"
 #include <stdbool.h>
 #include <stdlib.h>
@@ -21,6 +20,7 @@ typedef struct {
   bool a;
   bool s;
   bool d;
+  bool firing;
 } keypad_t;
 
 typedef struct {

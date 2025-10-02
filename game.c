@@ -93,6 +93,9 @@ void handle_input(game_t *game) {
       case SDLK_ESCAPE:
         game->state = QUIT;
         break;
+      case SDLK_SPACE:
+        game->keys.firing = true;
+        break;
       default:
         break;
       }
@@ -122,7 +125,6 @@ void handle_movement(game_t *game, player_t *player) {
     player->rect.x += player->ms;
   }
 }
-
 
 void cleanup(BulletManager *manager) {
   free_bullet_manager(manager);
@@ -154,6 +156,10 @@ int main(void) {
     update_screen(&sdl, &player, manager);
     handle_movement(&game, &player);
     update_bullets(manager);
+    if (game.keys.firing) {
+            printf("Firing\n");
+            add_bullet(manager, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, 5, 5, 5);
+    }
     // ~ 60fps
     SDL_Delay(16);
   }
