@@ -60,6 +60,7 @@ void draw_bullets(SDL_Renderer *renderer, BulletManager *manager) {
     draw_bullet(renderer, &manager->bullets[i]);
   }
 }
+
 void draw_bullet(SDL_Renderer *renderer, bullet_t *bullet) {
   i32 radius = bullet->radius;
   for (int y = -radius; y <= radius; y++) {

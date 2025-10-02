@@ -9,32 +9,16 @@
 // typedef int names
 
 typedef struct {
-  SDL_Window *window;
-  SDL_Renderer *renderer;
-  i32 bg_color;
-  i32 fg_color;
-} sdl_t;
-
-typedef struct {
-  bool w;
-  bool a;
-  bool s;
-  bool d;
-  bool firing;
-} keypad_t;
-
-typedef struct {
   i32 x;
   i32 y;
 } point_t;
 
 typedef struct {
-  i32 hp;          // health
-  i32 max_hp;      // max health
-  i32 color;       // hexadecimal color value
-  SDL_Rect rect;   // hitbox
-  i32 ms;          // movement speed
-  i32 bullet_size; // bullet size
+  i32 hp;        // health
+  i32 max_hp;    // max health
+  i32 color;     // hexadecimal color value
+  SDL_Rect rect; // hitbox
+  i32 ms;        // movement speed
 } player_t;
 
 typedef enum {
@@ -46,6 +30,9 @@ typedef enum {
 typedef struct {
   state_t state;
   keypad_t keys;
+  i32 bullet_radius; // bullet radius in pixels
+  i32 bullet_speed;  // how many pixels a bullet travels per frame
+
 } game_t;
 
 void move_player(game_t *game, player_t *player);
@@ -56,3 +43,5 @@ void init_game(game_t *game);
 void draw_player(SDL_Renderer *renderer, player_t *player);
 void handle_input(game_t *game);
 void handle_movement(game_t *game, player_t *player);
+void fire_bullet(BulletManager *manager, game_t *game);
+bool check_collision(BulletManager *manager, player_t *player);

@@ -21,7 +21,8 @@ typedef struct {
 
 BulletManager *create_bullet_manager(i32 initial_capacity);
 
-void add_bullet(BulletManager *manager, i32 x, i32 y, i32 vx, i32 vy, i32 radius);
+void add_bullet(BulletManager *manager, i32 x, i32 y, i32 vx, i32 vy,
+                i32 radius);
 void update_bullets(BulletManager *manager);
 void free_bullet_manager(BulletManager *manager);
 bool is_bullet_offscreen(bullet_t *bullet);

@@ -1,9 +1,11 @@
 #include "game.h"
 #include "bullets.h"
 #include "math.h"
+#include "time.h"
 
 const i32 base_max_hp = 3;
-
+const i32 base_bullet_speed = 5;
+const i32 base_bullet_radius = 5;
 
 bool init_sdl(sdl_t *sdl) {
   if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO)) {
@@ -30,6 +32,14 @@ bool init_sdl(sdl_t *sdl) {
   return true;
 }
 
+// must call after init_game initializes random state
+void fire_bullet(BulletManager *manager, game_t *game) {
+  i32 origin_x = rand() % WINDOW_WIDTH;
+  i32 origin_y = 0;
+  add_bullet(manager, origin_x, origin_y, 0, game->bullet_speed,
+             game->bullet_radius);
+}
+
 void init_player(player_t *player) {
   player->max_hp = base_max_hp;
   player->hp = player->max_hp;
@@ -41,15 +51,18 @@ void init_player(player_t *player) {
   player->rect.y = WINDOW_HEIGHT / 2;
   player->rect.h = 25;
   player->rect.w = 25;
-  player->bullet_size = 5;
 }
 
 void init_game(game_t *game) {
+  // initialize our random state
+  srand(time(NULL));
   game->state = RUNNING;
   game->keys.w = false;
   game->keys.a = false;
   game->keys.s = false;
   game->keys.d = false;
+  game->bullet_speed = base_bullet_speed;
+  game->bullet_radius = base_bullet_radius;
 }
 
 void draw_player(SDL_Renderer *renderer, player_t *player) {
@@ -77,6 +90,23 @@ void update_screen(sdl_t *sdl, player_t *player, BulletManager *manager) {
   draw_player(sdl->renderer, player);
   draw_bullets(sdl->renderer, manager);
   SDL_RenderPresent(sdl->renderer);
+}
+
+bool check_collision(BulletManager *manager, player_t *player) {
+  for (i32 i = 0; i < manager->count; i++) {
+    bullet_t bullet = manager->bullets[i];
+    i32 closestX =
+        MAX(player->rect.x, MIN(bullet.x, player->rect.x + player->rect.w));
+    i32 closestY =
+        MAX(player->rect.y, MIN(bullet.y, player->rect.y + player->rect.h));
+    i32 dx = bullet.x - closestX;
+    i32 dy = bullet.y - closestY;
+    i32 distance_squared = (dx * dx) + (dy * dy);
+    if (distance_squared < (bullet.radius * bullet.radius)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void handle_input(game_t *game) {
@@ -154,6 +184,10 @@ int main(void) {
     update_screen(&sdl, &player, manager);
     handle_movement(&game, &player);
     update_bullets(manager);
+    fire_bullet(manager, &game);
+    if (check_collision(manager, &player)) {
+      printf("Hit!\n");
+    }
     // ~ 60fps
     SDL_Delay(16);
   }
