@@ -2,8 +2,7 @@
 #include "bullets.h"
 #include "math.h"
 
-const i32 base_max_hp = 100;
-const i32 base_damage = 5;
+const i32 base_max_hp = 3;
 
 bool init_sdl(sdl_t *sdl) {
   if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO)) {
@@ -33,7 +32,6 @@ bool init_sdl(sdl_t *sdl) {
 void init_player(player_t *player) {
   player->max_hp = base_max_hp;
   player->hp = player->max_hp;
-  player->damage = base_damage;
   player->ms = 5;
 
   player->color = WHITE;
