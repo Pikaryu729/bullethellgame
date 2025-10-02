@@ -51,7 +51,6 @@ void init_game(game_t *game) {
   game->keys.a = false;
   game->keys.s = false;
   game->keys.d = false;
-  game->keys.lc = false;
 }
 
 void draw_player(SDL_Renderer *renderer, player_t *player) {
@@ -101,43 +100,6 @@ void handle_input(game_t *game) {
       }
       break;
       // end keydown case
-
-      // begin mouse down case
-    case SDL_MOUSEBUTTONDOWN:
-      switch (event.button.button) {
-      case (SDL_BUTTON_LEFT):
-        game->keys.lc = true;
-        game->last_shooting.x = event.button.x;
-        game->last_shooting.y = event.button.y;
-        break;
-      default:
-        break;
-      }
-      break;
-      // end mouse down case
-      // begin mouse motion case
-    case SDL_MOUSEMOTION:
-      if (game->keys.lc) {
-        game->last_shooting.x = event.motion.x;
-        game->last_shooting.y = event.motion.y;
-      }
-      break;
-      // end mouse motion case
-
-      // begin mouse up case
-    case SDL_MOUSEBUTTONUP:
-      switch (event.button.button) {
-      case (SDL_BUTTON_LEFT):
-        game->keys.lc = false;
-        break;
-      default:
-        break;
-      }
-      break;
-      // end mouse down case
-    default:
-      break;
-      // end all case
     }
   }
 
@@ -163,27 +125,6 @@ void handle_movement(game_t *game, player_t *player) {
   }
 }
 
-void handle_shooting(game_t *game, player_t *player, BulletManager *manager) {
-  if (game->keys.lc) {
-    const i32 dx = game->last_shooting.x - player->rect.x;
-    const i32 dy = game->last_shooting.y - player->rect.y;
-    const float magnitude = sqrtf(dx * dx + dy * dy);
-
-    if (magnitude == 0) {
-      printf("this shouldn't print\n");
-      return;
-    }
-
-    const i32 vx = (dx / magnitude) * BULLET_SPEED;
-    const i32 vy = (dy / magnitude) * BULLET_SPEED;
-    SDL_Rect bullet_rect = {.x = player->rect.x,
-                            .y = player->rect.y,
-                            .h = player->bullet_size,
-                            .w = player->bullet_size};
-
-    add_bullet(manager, bullet_rect, vx, vy);
-  }
-}
 
 void cleanup(BulletManager *manager) {
   free_bullet_manager(manager);
@@ -214,7 +155,6 @@ int main(void) {
     handle_input(&game);
     update_screen(&sdl, &player, manager);
     handle_movement(&game, &player);
-    handle_shooting(&game, &player, manager);
     update_bullets(manager);
     // ~ 60fps
     SDL_Delay(16);

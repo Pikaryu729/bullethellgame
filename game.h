@@ -21,7 +21,6 @@ typedef struct {
   bool a;
   bool s;
   bool d;
-  bool lc;
 } keypad_t;
 
 typedef struct {
@@ -32,7 +31,6 @@ typedef struct {
 typedef struct {
   i32 hp;          // health
   i32 max_hp;      // max health
-  i32 damage;      // damage per bullet
   i32 color;       // hexadecimal color value
   SDL_Rect rect;   // hitbox
   i32 ms;          // movement speed
@@ -48,8 +46,6 @@ typedef enum {
 typedef struct {
   state_t state;
   keypad_t keys;
-  point_t last_shooting; // this stores the last location of the mouse while the
-                         // user is holding down left click
 } game_t;
 
 void move_player(game_t *game, player_t *player);
@@ -60,4 +56,3 @@ void init_game(game_t *game);
 void draw_player(SDL_Renderer *renderer, player_t *player);
 void handle_input(game_t *game);
 void handle_movement(game_t *game, player_t *player);
-void handle_shooting(game_t *game, player_t *player, BulletManager *manager);
