@@ -14,12 +14,17 @@ typedef struct {
 } point_t;
 
 typedef struct {
-  i32 hp;        // health
-  i32 max_hp;    // max health
-  i32 color;     // hexadecimal color value
-  SDL_Rect rect; // hitbox
-  i32 ms;        // movement speed
-  bool invulnerable;
+  i32 hp;          // health
+  i32 max_hp;      // max health
+  i32 color;       // hexadecimal color value
+  SDL_Rect rect;   // hitbox
+  i32 ms;          // movement speed
+  bool recovering; // if player has recently been hit by bullet, they go into
+                   // recovery mode, which they cannot be hit
+  float recovery_timer; // keeps track of how long the player has been in
+                        // recovery mode
+  float recovery_dur;   // keeps track of how long the player should be in
+                        // recovery mode before going back to normal
 } player_t;
 
 typedef enum {

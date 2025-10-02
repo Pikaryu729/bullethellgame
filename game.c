@@ -51,7 +51,7 @@ void init_player(player_t *player) {
   player->rect.y = WINDOW_HEIGHT / 2;
   player->rect.h = 25;
   player->rect.w = 25;
-  player->invulnerable = false;
+  player->recovering = false;
 }
 
 void init_game(game_t *game) {
@@ -67,9 +67,11 @@ void init_game(game_t *game) {
 }
 
 void recover(player_t *player) {
-  player->invulnerable = true;
-  player->color = INVULNERABLE;
+  player->recovering = true;
+  player->color = RECOVERING;
 }
+
+void update_player(player_t *player, float dt) {}
 
 void draw_player(SDL_Renderer *renderer, player_t *player) {
   // extract player color rgb
@@ -99,8 +101,8 @@ void update_screen(sdl_t *sdl, player_t *player, BulletManager *manager) {
 }
 
 bool check_collision(BulletManager *manager, player_t *player) {
-  // impossible to collide if player is invulnerable
-  if (player->invulnerable) {
+  // impossible to collide if player is recovering
+  if (player->recovering) {
     return false;
   }
 
@@ -118,6 +120,13 @@ bool check_collision(BulletManager *manager, player_t *player) {
     }
   }
   return false;
+}
+
+void handle_collision(BulletManager *manager, player_t *player) {
+  if (check_collision(manager, player)) {
+    --player->hp;
+    recover(player);
+  }
 }
 
 void handle_input(game_t *game) {
@@ -194,11 +203,9 @@ int main(void) {
     handle_input(&game);
     update_screen(&sdl, &player, manager);
     handle_movement(&game, &player);
+    handle_collision(manager, &player);
     update_bullets(manager);
     fire_bullet(manager, &game);
-    if (check_collision(manager, &player)) {
-      recover(&player);
-    }
     // ~ 60fps
     SDL_Delay(16);
   }
