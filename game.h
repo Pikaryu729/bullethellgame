@@ -19,6 +19,7 @@ typedef struct {
   i32 color;     // hexadecimal color value
   SDL_Rect rect; // hitbox
   i32 ms;        // movement speed
+  bool invulnerable;
 } player_t;
 
 typedef enum {
@@ -45,3 +46,4 @@ void handle_input(game_t *game);
 void handle_movement(game_t *game, player_t *player);
 void fire_bullet(BulletManager *manager, game_t *game);
 bool check_collision(BulletManager *manager, player_t *player);
+void recover(player_t *player);

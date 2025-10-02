@@ -51,6 +51,7 @@ void init_player(player_t *player) {
   player->rect.y = WINDOW_HEIGHT / 2;
   player->rect.h = 25;
   player->rect.w = 25;
+  player->invulnerable = false;
 }
 
 void init_game(game_t *game) {
@@ -63,6 +64,11 @@ void init_game(game_t *game) {
   game->keys.d = false;
   game->bullet_speed = base_bullet_speed;
   game->bullet_radius = base_bullet_radius;
+}
+
+void recover(player_t *player) {
+  player->invulnerable = true;
+  player->color = INVULNERABLE;
 }
 
 void draw_player(SDL_Renderer *renderer, player_t *player) {
@@ -93,6 +99,11 @@ void update_screen(sdl_t *sdl, player_t *player, BulletManager *manager) {
 }
 
 bool check_collision(BulletManager *manager, player_t *player) {
+  // impossible to collide if player is invulnerable
+  if (player->invulnerable) {
+    return false;
+  }
+
   for (i32 i = 0; i < manager->count; i++) {
     bullet_t bullet = manager->bullets[i];
     i32 closestX =
@@ -186,7 +197,7 @@ int main(void) {
     update_bullets(manager);
     fire_bullet(manager, &game);
     if (check_collision(manager, &player)) {
-      printf("Hit!\n");
+      recover(&player);
     }
     // ~ 60fps
     SDL_Delay(16);
