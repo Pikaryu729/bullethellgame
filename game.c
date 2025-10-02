@@ -4,6 +4,7 @@
 
 const i32 base_max_hp = 3;
 
+
 bool init_sdl(sdl_t *sdl) {
   if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO)) {
     SDL_Log("Error initializing sdl: %s \n", SDL_GetError());
@@ -93,9 +94,6 @@ void handle_input(game_t *game) {
       case SDLK_ESCAPE:
         game->state = QUIT;
         break;
-      case SDLK_SPACE:
-        game->keys.firing = true;
-        break;
       default:
         break;
       }
@@ -156,10 +154,6 @@ int main(void) {
     update_screen(&sdl, &player, manager);
     handle_movement(&game, &player);
     update_bullets(manager);
-    if (game.keys.firing) {
-            printf("Firing\n");
-            add_bullet(manager, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, 5, 5, 5);
-    }
     // ~ 60fps
     SDL_Delay(16);
   }
