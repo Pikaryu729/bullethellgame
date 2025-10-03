@@ -74,6 +74,11 @@ void recover(player_t *player) {
   player->color = RECOVERING;
 }
 
+void game_over(game_t *game) {
+  printf("You lost!\n");
+  game->state = QUIT;
+}
+
 void update_player(player_t *player, float dt) {
   // check if player is dead
   if (player->hp <= 0) {
@@ -244,6 +249,9 @@ int main(void) {
     update_bullets(manager);
     update_player(&player, 0.0167);
     fire_bullet(manager, &game);
+    if (player.hp <= 0) {
+      game_over(&game);
+    }
     // ~ 60fps
     SDL_Delay(16);
   }
