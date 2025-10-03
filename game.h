@@ -1,6 +1,7 @@
 #pragma once
 #include "bullets.h"
 #include "common.h"
+#include "textures.h"
 
 #include "SDL.h"
 #include <stdbool.h>
@@ -42,7 +43,8 @@ typedef struct {
 } game_t;
 
 void move_player(game_t *game, player_t *player);
-void update_screen(sdl_t *sdl, player_t *player, BulletManager *manager);
+void update_screen(sdl_t *sdl, player_t *player, BulletManager *manager,
+                   textures_t *textures);
 bool init_sdl(sdl_t *sdl);
 void init_player(player_t *player);
 void init_game(game_t *game);

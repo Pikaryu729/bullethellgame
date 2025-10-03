@@ -11,8 +11,9 @@ bool init_sdl(sdl_t *sdl) {
   if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO)) {
     SDL_Log("Error initializing sdl: %s \n", SDL_GetError());
   }
-  sdl->window = SDL_CreateWindow("Survivor Game", SDL_WINDOWPOS_CENTERED,
-                                 SDL_WINDOWPOS_CENTERED, 1280, 720, 0);
+  sdl->window =
+      SDL_CreateWindow("Survivor Game", SDL_WINDOWPOS_CENTERED,
+                       SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
   if (!sdl->window) {
     SDL_Log("Error creating window: %s \n", SDL_GetError());
     return false;
@@ -52,6 +53,8 @@ void init_player(player_t *player) {
   player->rect.h = 25;
   player->rect.w = 25;
   player->recovering = false;
+  player->recovery_dur = 2.0f;
+  player->recovery_timer = 0.0f;
 }
 
 void init_game(game_t *game) {
@@ -71,7 +74,23 @@ void recover(player_t *player) {
   player->color = RECOVERING;
 }
 
-void update_player(player_t *player, float dt) {}
+void update_player(player_t *player, float dt) {
+  // check if player is dead
+  if (player->hp <= 0) {
+    // game_over();
+  }
+  if (player->recovering) {
+    player->recovery_timer += dt;
+    if (player->recovery_timer > player->recovery_dur) {
+      // player is no longer recovering
+      player->recovering = false;
+      // set player color back to original
+      player->color = WHITE;
+      // reset recovery_timer
+      player->recovery_timer = 0;
+    }
+  }
+}
 
 void draw_player(SDL_Renderer *renderer, player_t *player) {
   // extract player color rgb
@@ -85,7 +104,8 @@ void draw_player(SDL_Renderer *renderer, player_t *player) {
   SDL_RenderFillRect(renderer, &player->rect);
 }
 
-void update_screen(sdl_t *sdl, player_t *player, BulletManager *manager) {
+void update_screen(sdl_t *sdl, player_t *player, BulletManager *manager,
+                   textures_t *textures) {
   // extract bg color rgb
   i8 color_r = (sdl->bg_color >> 24) & 0xFF;
   i8 color_g = (sdl->bg_color >> 16) & 0xFF;
@@ -97,6 +117,18 @@ void update_screen(sdl_t *sdl, player_t *player, BulletManager *manager) {
 
   draw_player(sdl->renderer, player);
   draw_bullets(sdl->renderer, manager);
+  for (i32 i = 1; i <= player->max_hp; i++) {
+    SDL_Rect dst_rect;
+    dst_rect.x = -25 + (i * 35);
+    dst_rect.y = 10;
+    dst_rect.w = 25;
+    dst_rect.h = 25;
+    if (player->hp < i) {
+      SDL_RenderCopy(sdl->renderer, textures->heart_empty, NULL, &dst_rect);
+    } else {
+      SDL_RenderCopy(sdl->renderer, textures->heart_full, NULL, &dst_rect);
+    }
+  }
   SDL_RenderPresent(sdl->renderer);
 }
 
@@ -123,10 +155,12 @@ bool check_collision(BulletManager *manager, player_t *player) {
 }
 
 void handle_collision(BulletManager *manager, player_t *player) {
-  if (check_collision(manager, player)) {
-    --player->hp;
-    recover(player);
+  if (!check_collision(manager, player)) {
+    return;
   }
+  printf("Hit!\n");
+  --player->hp;
+  recover(player);
 }
 
 void handle_input(game_t *game) {
@@ -196,15 +230,19 @@ int main(void) {
   player_t player;
   init_player(&player);
 
+  textures_t textures;
+  load_textures(sdl.renderer, &textures);
+
   // initialize bullet manager with 10 bullets to start
   BulletManager *manager = create_bullet_manager(10);
 
   while (game.state != QUIT) {
     handle_input(&game);
-    update_screen(&sdl, &player, manager);
+    update_screen(&sdl, &player, manager, &textures);
     handle_movement(&game, &player);
     handle_collision(manager, &player);
     update_bullets(manager);
+    update_player(&player, 0.0167);
     fire_bullet(manager, &game);
     // ~ 60fps
     SDL_Delay(16);
